@@ -22,6 +22,7 @@ var DailySong = function (_Component) {
     DailySong.getApiRequest = function getApiRequest(_ref) {
         var channel = _ref.channel;
 
+        console.log('channel', channel);
         return {
             id: 'slack.dailySong',
             params: { channel: channel }

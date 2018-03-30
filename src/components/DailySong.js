@@ -15,6 +15,7 @@ export default class DailySong extends Component {
     }
 
     static getApiRequest({ channel }) {
+        console.log('channel', channel);
         return {
             id: `slack.dailySong`,
             params: { channel }

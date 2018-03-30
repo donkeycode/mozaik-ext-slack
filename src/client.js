@@ -10,45 +10,35 @@ const config = require('./config')
 const client = mozaik => {
     mozaik.loadApiConfig(config)
 
-    const buildApiRequest = (path) => {
+    const buildApiRequest = (path, params) => {
         const url = config.get('slack.baseUrl')
         const token = config.get('slack.token');
 
         const options = {
             uri: `${url}${path}`,
             qs: {
-                token: token
+                token: token,
+                pretty: 1
             },
             json: true,
             resolveWithFullResponse: true
         }
 
+        if (params) {
+            options.qs = Object.assign(options.qs, params);
+        }
+
+        console.log(options);
         return request(options)
     }
 
     const apiCalls = {
-
-        // return buildApiRequest(`/repos/${params.repository}/commits`, params).then(res => {
-        //     buffer.commits = buffer.commits.concat(res.body)
-
-        //     // checks if there's an available next page in response link http header
-        //     if (
-        //         res.headers.link &&
-        //         /&page=(\d+)> rel="next"/.test(res.headers.link) === true &&
-        //         buffer.commits.length < buffer.max
-        //     ) {
-        //         buffer.page = Number(/&page=(\d+)> rel="next"/.exec(res.headers.link)[1])
-
-        //         return repositoryCommits(params, buffer)
-        //     } else {
-        //         return buffer.commits
-        //     }
-        // })
-
-        dailySong({}, params) {
-            params = Object.assign({ oldest: Date.now() / 1000}, params);
+        dailySong(params) {
+            const date = new Date();
+            date.setHours(0, 0, 0, 0);
+            params = Object.assign({ oldest: date.getTime() / 1000}, params);
             return buildApiRequest(`/conversations.history`, params).then((res) => {
-                return res.filter(message => message.text.match(/^.?Le son du jour.+/gi))[0];
+                return res.body.messages.filter(message => message.text.match(/^Le son du jour[\r?\n|\r]?.+/gi))
             })
         }
     }
