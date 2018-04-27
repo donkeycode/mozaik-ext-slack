@@ -1,7 +1,7 @@
 'use strict'
 
 const request = require('request-promise-native')
-const chalk = require('chalk')
+// const chalk = require('chalk')
 const config = require('./config')
 
 /**
@@ -28,7 +28,6 @@ const client = mozaik => {
             options.qs = Object.assign(options.qs, params);
         }
 
-        console.log(options);
         return request(options)
     }
 
@@ -38,7 +37,7 @@ const client = mozaik => {
             date.setHours(0, 0, 0, 0);
             params = Object.assign({ oldest: date.getTime() / 1000}, params);
             return buildApiRequest(`/conversations.history`, params).then((res) => {
-                return res.body.messages.filter(message => message.text.match(/^Le son du jour[\r?\n|\r]?.+/gi))
+                return res.body.messages.filter(message => message.text.match(/^Le son du jour[\r?\n|\r]?.+/gi))[0]
             })
         }
     }

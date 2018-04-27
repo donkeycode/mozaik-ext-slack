@@ -7,16 +7,20 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { TrapApiError, WidgetHeader, WidgetLoader, Widget, WidgetBody, WidgetAvatar } from '@mozaik/ui';
+import FaPlayCircleO from 'react-icons/lib/fa/play-circle-o';
 
 var request = require('request-promise-native');
 
 var DailySong = function (_Component) {
     _inherits(DailySong, _Component);
 
-    function DailySong() {
+    function DailySong(props) {
         _classCallCheck(this, DailySong);
 
-        return _possibleConstructorReturn(this, _Component.apply(this, arguments));
+        var _this = _possibleConstructorReturn(this, _Component.call(this, props));
+
+        _this.play = _this.play.bind(_this);
+        return _this;
     }
 
     DailySong.getApiRequest = function getApiRequest(_ref) {
@@ -29,6 +33,24 @@ var DailySong = function (_Component) {
         };
     };
 
+    DailySong.prototype.getHtml = function getHtml(html) {
+        return { __html: html };
+    };
+
+    DailySong.prototype.play = function play() {
+        this.props.playing = true;
+        this.setState();
+    };
+
+    DailySong.prototype.shouldComponentUpdate = function shouldComponentUpdate(nextProps, nextState) {
+        console.log('update component', this.props.apiData, !this.props.apiData);
+        return !this.props.apiData || this.props.playing || nextProps.apiData.ts != this.props.apiData.ts;
+    };
+
+    DailySong.prototype.componentDidUpdate = function componentDidUpdate() {
+        this.props.playing = false;
+    };
+
     DailySong.prototype.render = function render() {
         var _props = this.props,
             apiData = _props.apiData,
@@ -36,19 +58,52 @@ var DailySong = function (_Component) {
             title = _props.title;
 
 
-        var body = React.createElement(WidgetLoader, null);
-        var count = 0;
-        console.log('apiData', apiData);
+        var body = void 0;
+        var songTitle = "";
+        var videoBody = void 0;
         if (apiData) {
-            body = React.createElement('div', { id: 'slack' });
+            var video = apiData.attachments[0];
+            songTitle = video ? " - " + video.title : "";
+            if (!this.props.playing) {
+                videoBody = React.createElement(
+                    'div',
+                    { className: 'thumb' },
+                    React.createElement('img', { src: video.thumb_url, alt: video.title, width: video.thumb_width, height: video.thumb_height }),
+                    React.createElement(
+                        'a',
+                        { className: 'play-icon', onClick: this.play },
+                        React.createElement(FaPlayCircleO, null)
+                    )
+                );
+            } else if (this.props.playing) {
+                videoBody = React.createElement('div', { id: 'video', dangerouslySetInnerHTML: this.getHtml(video.video_html) });
+            }
+        } else {
+            videoBody = React.createElement(
+                'div',
+                { className: 'noSong' },
+                React.createElement(
+                    'p',
+                    null,
+                    'Envoyez le son du jour sur le channel entre-nous'
+                )
+            );
         }
+        body = React.createElement(
+            'div',
+            { id: 'slack' },
+            React.createElement(
+                'div',
+                { id: 'sonDuJour' },
+                videoBody
+            )
+        );
 
         return React.createElement(
             Widget,
             null,
             React.createElement(WidgetHeader, {
-                title: title || 'Le son du jour',
-                count: count
+                title: (title || 'Le son du jour') + songTitle
             }),
             React.createElement(
                 WidgetBody,
@@ -68,9 +123,13 @@ var DailySong = function (_Component) {
 DailySong.PropTypes = {
     title: PropTypes.string,
     channel: PropTypes.string.isRequired,
+    playing: PropTypes.bool,
     apiData: PropTypes.shape({
         DailySong: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)).isRequired
     }),
     apiError: PropTypes.object
+};
+DailySong.defaultProps = {
+    playing: false
 };
 export default DailySong;
